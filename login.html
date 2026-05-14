@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth | MyShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        input:focus { border-color: #6366f1; ring: 2px; ring-color: #6366f1; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-indigo-600">MyShop</h1>
+            <p id="sub-title" class="text-gray-400 mt-2">Professional Business Management</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <input type="text" id="l_user" placeholder="Username" required 
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl outline-none transition-all">
+            <input type="password" id="l_pass" placeholder="Password" required 
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl outline-none transition-all">
+            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition">
+                SIGN IN
+            </button>
+            <p class="text-center text-sm text-gray-500">
+                Don't have an account? <a href="#" onclick="toggle(true)" class="text-indigo-600 font-bold underline">Sign Up</a>
+            </p>
+        </form>
+
+        <form id="signupForm" class="space-y-6 hidden">
+            <input type="text" id="s_shop" placeholder="Shop Name" required 
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl outline-none transition-all">
+            <input type="text" id="s_user" placeholder="Create Username" required 
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl outline-none transition-all">
+            <input type="password" id="s_pass" placeholder="Create Password" required 
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl outline-none transition-all">
+            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 transition">
+                CREATE ACCOUNT
+            </button>
+            <p class="text-center text-sm text-gray-500">
+                Already have an account? <a href="#" onclick="toggle(false)" class="text-indigo-600 font-bold underline">Login</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+
+        function toggle(isSignup) {
+            loginForm.classList.toggle('hidden', isSignup);
+            signupForm.classList.toggle('hidden', !isSignup);
+        }
+
+        // --- SIGN UP LOGIC ---
+        signupForm.onsubmit = (e) => {
+            e.preventDefault();
+            const user = document.getElementById('s_user').value.trim().toLowerCase();
+            const pass = document.getElementById('s_pass').value;
+            const shop = document.getElementById('s_shop').value;
+
+            // Tunahifadhi kwa kutumia keys zinazotambulika na Dashboard
+            localStorage.setItem('stored_user', user);
+            localStorage.setItem('stored_pass', pass);
+            localStorage.setItem('myShop_name', shop); 
+
+            alert("Account created successfully! Please login.");
+            toggle(false);
+        };
+
+        // --- SIGN IN LOGIC ---
+        loginForm.onsubmit = (e) => {
+            e.preventDefault();
+            const user = document.getElementById('l_user').value.trim().toLowerCase();
+            const pass = document.getElementById('l_pass').value;
+
+            const savedUser = localStorage.getItem('stored_user');
+            const savedPass = localStorage.getItem('stored_pass');
+            const savedShopName = localStorage.getItem('myShop_name');
+
+            if (user === savedUser && pass === savedPass) {
+                // Muhimu: Weka login status na hakikisha jina la duka lipo
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('myShop_name', savedShopName); 
+                
+                window.location.href = 'index.html'; 
+            } else {
+                alert("Incorrect username or password. If you haven't registered, sign up first!");
+            }
+        };
+    </script>
+</body>
+</html>

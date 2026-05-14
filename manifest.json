@@ -1,0 +1,22 @@
+{
+  "short_name": "MyShop",
+  "name": "MyShop Financial Analytics",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#F4F7FE",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#6236FF",
+  "description": "Smart shop analytics and financial reporting tool."
+}
