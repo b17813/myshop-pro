@@ -454,6 +454,9 @@
 
             filteredData.forEach((sale, idx) => {
                 const originalIndex = allTransactions.findIndex(t => t === sale);
+                const saleLabel = sale.quantity && sale.unitType
+                    ? `${sale.quantity} ${sale.unitType} of ${sale.name || sale.title}`
+                    : (sale.name || sale.title || sale.title);
                 const card = document.createElement('div');
                 card.className = 'sale-card';
                 card.style.animationDelay = (idx * 0.06) + 's';
@@ -464,7 +467,7 @@
                         </svg>
                     </div>
                     <div class="sale-info">
-                        <div class="sale-title">${sale.title}</div>
+                        <div class="sale-title">${saleLabel}</div>
                         <div class="sale-date">${sale.date} &bull; SALE</div>
                     </div>
                     <div class="sale-amount">+TZS ${parseFloat(sale.amount).toLocaleString()}</div>

@@ -416,12 +416,16 @@
                 <input type="text" id="t-title" placeholder="e.g. Nike Shoes">
             </div>
 
-            <div style="display:flex; gap:15px;">
-                <div class="input-group" style="flex:1;">
+            <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                <div class="input-group" style="flex:1; min-width:140px;">
                     <label>Quantity</label>
                     <input type="number" id="t-qty" min="1" placeholder="0" oninput="calculatePreview()">
                 </div>
-                <div class="input-group" style="flex:1;">
+                <div class="input-group" style="flex:1; min-width:140px;">
+                    <label>Unit</label>
+                    <input type="text" id="t-unit" placeholder="e.g. kg or piece" oninput="calculatePreview()">
+                </div>
+                <div class="input-group" style="flex:1; min-width:140px;">
                     <label>Price per Unit (TZS)</label>
                     <input type="number" id="t-price" placeholder="0" oninput="calculatePreview()">
                 </div>
@@ -578,16 +582,28 @@
         function saveTransaction() {
             const type     = document.getElementById('t-type').value;
             const itemName = document.getElementById('t-title').value.trim();
-            const qty      = parseFloat(document.getElementById('t-qty').value);
-            const price    = parseFloat(document.getElementById('t-price').value);
+            const qty      = parseInt(document.getElementById('t-qty').value, 10) || 0;
+            const unit     = document.getElementById('t-unit').value.trim();
+            const price    = parseFloat(document.getElementById('t-price').value) || 0;
 
-            if (!itemName || isNaN(price) || qty <= 0) return alert("Please fill all fields correctly.");
+            if (!itemName || price <= 0 || qty <= 0) {
+                return alert("Please fill all fields correctly.");
+            }
 
             const now = new Date();
+            const amount = parseFloat((qty * price).toFixed(2));
+            const title = unit
+                ? `${qty} ${unit} of ${itemName}`
+                : `${qty} ${itemName}`;
             const transaction = {
-                id: Date.now(), type,
-                title: `${qty}x ${itemName}`,
-                amount: qty * price,
+                id: Date.now(),
+                type,
+                name: itemName,
+                quantity: qty,
+                unitType: unit,
+                unitPrice: price,
+                title: title,
+                amount: amount,
                 date: now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
                 fullDate: now.toISOString()
             };
@@ -598,6 +614,7 @@
 
             document.getElementById('t-title').value = '';
             document.getElementById('t-qty').value   = '1';
+            document.getElementById('t-unit').value  = '';
             document.getElementById('t-price').value = '';
 
             toggleModal();

@@ -274,6 +274,89 @@
         .delete-btn:active { transform: scale(0.9); }
         .delete-btn svg { stroke: var(--red); transition: stroke 0.2s; }
 
+        /* QUANTITY CONTROLS */
+        /* QUICK ADD QUANTITY */
+        .quick-add-section {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        .quick-add-input {
+            width: 80px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            color: var(--ink);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .quick-add-input:focus {
+            border-color: var(--blue);
+        }
+
+        .tick-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #34C759;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .tick-btn:hover {
+            background: #2EAF50;
+        }
+
+        .tick-btn:active {
+            transform: scale(0.9);
+        }
+
+        .low-stock-badge {
+            background: var(--red-light);
+            color: var(--red);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* NOTIFICATION */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--red);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(255, 59, 48, 0.3);
+            animation: slideInRight 0.3s ease both;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(400px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         /* EMPTY STATE */
         .empty-state {
             background: var(--card);
@@ -378,18 +461,34 @@
         <div id="stock-list"></div>
     </div>
 
+    <div id="notification-container"></div>
+
     <div class="total-bar">
         <span class="tl">Showing total</span>
         <span class="tv" id="bottom-total">TZS 0</span>
     </div>
 
     <script>
+        const LOW_STOCK_THRESHOLD = 5;
+
+        function showNotification(message) {
+            const container = document.getElementById('notification-container');
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.innerText = message;
+            container.appendChild(notif);
+            setTimeout(() => notif.remove(), 4000);
+        }
+
         function renderStock() {
             const stockList = document.getElementById('stock-list');
             const dateFrom  = document.getElementById('date-from').value;
             const dateTo    = document.getElementById('date-to').value;
 
             const allTransactions = JSON.parse(localStorage.getItem('myShop_transactions')) || [];
+            
+            // Tenga mauzo (sales) kwa ajili ya kupunguza stock
+            const salesData = allTransactions.filter(t => t.type === 'sale');
             let filteredData = allTransactions.filter(t => t.type === 'stock');
 
             if (dateFrom || dateTo) {
@@ -408,14 +507,7 @@
 
             filteredData = [...filteredData].reverse();
 
-            const total = filteredData.reduce((s, t) => s + parseFloat(t.amount), 0);
-
-            document.getElementById('summary-total').innerText = 'TZS ' + total.toLocaleString();
-            document.getElementById('summary-count').innerText = filteredData.length;
-            document.getElementById('count-badge').innerText   = filteredData.length + ' record' + (filteredData.length !== 1 ? 's' : '');
-            document.getElementById('bottom-total').innerText  = 'TZS ' + total.toLocaleString();
-            document.getElementById('section-label').innerText =
-                (dateFrom || dateTo) ? 'Filtered Results' : 'Recent Stock';
+            let totalInvestedCalculated = 0;
 
             if (filteredData.length === 0) {
                 stockList.innerHTML = `
@@ -428,6 +520,11 @@
                         <h3>No Stock Found</h3>
                         <p>No records match the selected period.</p>
                     </div>`;
+                
+                document.getElementById('summary-total').innerText = 'TZS 0';
+                document.getElementById('summary-count').innerText = '0';
+                document.getElementById('count-badge').innerText   = '0 records';
+                document.getElementById('bottom-total').innerText  = 'TZS 0';
                 return;
             }
 
@@ -435,20 +532,49 @@
 
             filteredData.forEach((stock, idx) => {
                 const originalIndex = allTransactions.findIndex(t => t === stock);
+                
+                const originalQuantity = parseInt(stock.quantity, 10) || 0;
+                const unitPrice = parseFloat(stock.unitPrice) || (originalQuantity > 0 ? (parseFloat(stock.amount) || 0) / originalQuantity : 0);
+
+                const totalSoldUnits = salesData
+                    .filter(s => s.name && stock.name && s.name.toLowerCase() === stock.name.toLowerCase())
+                    .reduce((sum, s) => sum + (parseInt(s.quantity, 10) || 0), 0);
+
+                const quantity = Math.max(0, originalQuantity - totalSoldUnits);
+                const adjustedAmount = quantity * unitPrice;
+                totalInvestedCalculated += adjustedAmount;
+
+                const transactionAmount = parseFloat(stock.amount) || 0;
+                const isLowStock = quantity <= LOW_STOCK_THRESHOLD;
+                const lowStockHtml = isLowStock ? `<span class="low-stock-badge">Low Stock</span>` : '';
+
+                const stockLabel = stock.quantity && stock.unitType
+                    ? `${stock.quantity} ${stock.unitType} of ${stock.name || stock.title}`
+                    : (stock.name || stock.title);
+
                 const card = document.createElement('div');
                 card.className = 'stock-card';
                 card.style.animationDelay = (idx * 0.06) + 's';
+
                 card.innerHTML = `
                     <div class="stock-icon">
                         <svg viewBox="0 0 24 24" fill="#185FA5">
                             <path d="M20 13H4v-2h16v2zM20 17H4v-2h16v2zM20 9H4V7h16v2z"/>
                         </svg>
                     </div>
-                    <div class="stock-info">
-                        <div class="stock-title">${stock.title}</div>
-                        <div class="stock-date">${stock.date} &bull; STOCK</div>
+                    <div class="stock-info" style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="stock-title">${stockLabel}</div>
+                                <div class="stock-date">${stock.date} &bull; STOCK</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="stock-amount">TZS ${transactionAmount.toLocaleString()}</div>
+                                ${lowStockHtml}
+                                ${adjustedAmount !== transactionAmount ? `<div style="font-size:12px; color:var(--ink-muted); margin-top:6px;">Remaining value: TZS ${adjustedAmount.toLocaleString()}</div>` : ''}
+                            </div>
+                        </div>
                     </div>
-                    <div class="stock-amount">TZS ${parseFloat(stock.amount).toLocaleString()}</div>
                     <button class="delete-btn" onclick="deleteStock(${originalIndex})">
                         <svg width="16" height="16" fill="none" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M3 6h18m-2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
@@ -457,6 +583,12 @@
                 `;
                 stockList.appendChild(card);
             });
+
+            document.getElementById('summary-total').innerText = 'TZS ' + totalInvestedCalculated.toLocaleString();
+            document.getElementById('summary-count').innerText = filteredData.length;
+            document.getElementById('count-badge').innerText   = filteredData.length + ' record' + (filteredData.length !== 1 ? 's' : '');
+            document.getElementById('bottom-total').innerText  = 'TZS ' + totalInvestedCalculated.toLocaleString();
+            document.getElementById('section-label').innerText = (dateFrom || dateTo) ? 'Filtered Results' : 'Recent Stock';
         }
 
         function clearFilter() {
