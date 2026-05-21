@@ -215,12 +215,15 @@
         /* TRANSACTION CARDS */
         .transaction-card {
             background-color: #fff; border: 1px solid #f2f2f2; border-radius: 20px;
-            padding: 16px; display: flex; align-items: center;
+            padding: 16px; display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: flex-start;
             margin-bottom: 15px; justify-content: space-between;
             animation: slideInCard 0.35s ease both;
         }
 
-        .trans-left { display: flex; align-items: center; gap: 14px; }
+        .trans-left { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
 
         .trans-icon {
             width: 46px; height: 46px; border-radius: 15px;
@@ -230,10 +233,20 @@
         .trans-icon.stock     { background: #EEF0FF; }
         .trans-icon.expense { background: #FFF4E8; }
         .trans-icon svg { width: 22px; height: 22px; }
-        .trans-details p { margin: 0; }
+        
+        .trans-details { 
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .trans-details p { 
+            margin: 0; 
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
 
-        .amount-green { color: #111; font-weight: 700; font-size: 14px; }
-        .amount-red   { color: #111; font-weight: 700; font-size: 14px; }
+        .amount-green { color: #111; font-weight: 700; font-size: 14px; text-align: right; }
+        .amount-red   { color: #111; font-weight: 700; font-size: 14px; text-align: right; }
         .empty-state  { text-align: center; color: var(--text-gray); margin-top: 50px; font-size: 14px; }
 
         @keyframes slideInCard {
